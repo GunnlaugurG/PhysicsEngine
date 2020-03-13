@@ -1,10 +1,10 @@
-import { distance } from './canvas';
+import { distance, c, canvas } from './canvas';
 
 var gravity = 0.2;
-var friction = 0.9;
+var friction = 0.7;
 
 export class Ball {
-	constructor(x, y, dx, dy, radius, color, c, canvas) {
+	constructor(x, y, dx, dy, radius, color, placeHolder) {
 		this.x = x;
 		this.y = y;
 		this.velocity = {
@@ -13,66 +13,66 @@ export class Ball {
 		}
 		this.radius = radius;
 		this.color = color;
-		this.c = c;
-		this.canvas = canvas;
 		this.mass = 1;
+		this.placeHolder = placeHolder;
 	}
 
 
 	update(balls) {
-		let coll = false;
-		for (let i = 0; i < balls.length; i++) {
-			if (this === balls[i] ) continue;
-			const prev = balls[i];
-			if (distance(this.x + this.velocity.x, this.y + this.velocity.y, prev.x, prev.y) - this.radius * 2  < 0) {
-				resolveCollision(this, balls[i]);
-				coll = true;
+		if (!this.placeHolder) {
+			let coll = false;
+			for (let i = 0; i < balls.length; i++) {
+				if (this === balls[i] ) continue;
+				const prev = balls[i];
+				if (distance(this.x + this.velocity.x, this.y + this.velocity.y, prev.x, prev.y) - this.radius * 2  < 0) {
+					resolveCollision(this, balls[i]);
+					coll = true;
+				}
 			}
-		}
-		
-		if (this.x - this.radius <= 0 || this.x + this.radius >= innerWidth) {
-			this.velocity.x = - this.velocity.x;
-		}
-		if ((this.y - this.radius) + this.velocity.y <= 0 || (this.y + this.radius) + this.velocity.y >= innerHeight) {
-			this.velocity.y = - this.velocity.y;
-			this.velocity.y = this.velocity.y * friction;
-			this.velocity.x = this.velocity.x * friction;
-		}
-		else {
-			if (!coll) {
-				this.velocity.y += gravity;
-			} else {
+			
+			if (this.x - this.radius <= 0 || this.x + this.radius >= innerWidth) {
+				this.velocity.x = - this.velocity.x;
 			}
+			if ((this.y - this.radius) + this.velocity.y <= 0 || (this.y + this.radius) + this.velocity.y >= innerHeight) {
+				this.velocity.y = - this.velocity.y;
+				this.velocity.y = this.velocity.y * friction;
+				this.velocity.x = this.velocity.x * friction;
+			}
+			else {
+				if (!coll) {
+					this.velocity.y += gravity;
+				} else {
+				}
+			}
+			this.x += this.velocity.x;
+			this.y += this.velocity.y;
+	
+			// if (this.y + this.radius + this.velocity.y > this.canvas.height) {
+			// 	this.velocity.y = -this.velocity.y;
+			// 	this.velocity.y = this.velocity.y * friction;
+			// 	this.velocity.x = this.velocity.x * friction;
+			// } else {
+			// 	this.velocity.y += gravity;
+			// }
+	
+			// if (this.x + this.radius >= this.canvas.width || this.x - this.radius <= 0) {
+			// 	this.velocity.x = -this.velocity.x * friction;
+			// }
+	
+			// this.x += this.velocity.x;
+			// this.y += this.velocity.y;
+
 		}
-		this.x += this.velocity.x;
-		this.y += this.velocity.y;
-
-		// if (this.y + this.radius + this.velocity.y > this.canvas.height) {
-		// 	this.velocity.y = -this.velocity.y;
-		// 	this.velocity.y = this.velocity.y * friction;
-		// 	this.velocity.x = this.velocity.x * friction;
-		// } else {
-		// 	this.velocity.y += gravity;
-		// }
-
-		// if (this.x + this.radius >= this.canvas.width || this.x - this.radius <= 0) {
-		// 	this.velocity.x = -this.velocity.x * friction;
-		// }
-
-		// this.x += this.velocity.x;
-		// this.y += this.velocity.y;
 
 		this.draw();
 	};
 
 	draw() {
-		this.c.beginPath();
-		this.c.arc(this.x, this.y, this.radius, 0, Math.PI * 2, false);	
-		this.c.fillStyle = this.color;
-		this.c.strokeStyle = this.color;
-		// this.c.fill();
-		this.c.stroke();
-		this.c.closePath();
+		c.beginPath();
+		c.arc(this.x, this.y, this.radius, 0, Math.PI * 2, false);	
+		c.strokeStyle = this.color;
+		c.stroke();
+		c.closePath();
 	};
 }
 

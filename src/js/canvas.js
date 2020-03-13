@@ -1,38 +1,78 @@
 import utils from './utils';
 import {Ball} from './Ball';
 
-const canvas = document.querySelector('canvas');
-const c = canvas.getContext('2d');
+export const canvas = document.querySelector('canvas');
+export const c = canvas.getContext('2d');
 
 canvas.width = innerWidth
 canvas.height = innerHeight
 
-
-
+let moving = false;
+let line = [];
 const mouse = {
   x: innerWidth / 2,
   y: innerHeight / 2
+}
+
+class Line {
+  constructor(x, y, toX, toY) {
+    this.x = x;
+    this.y = y;
+    this.toX = toX;
+    this.toY = toY;
+  }
+
+  update() {
+    this.draw();
+  }
+
+  draw() {
+    c.beginPath();
+    c.moveTo(this.x, this.y);
+    c.lineTo(mouse.x, mouse.y);
+    c.stroke();
+    c.strokeStyle = 'black';
+  }
 }
 
 const colors = ['#2185C5', '#7ECEFD', '#FFF6E5', '#FF7F66']
 
 // Event Listeners
 addEventListener('mousemove', (event) => {
-  mouse.x = event.clientX
-  mouse.y = event.clientY
+  if (moving) {
+    mouse.x = event.clientX;
+    mouse.y = event.clientY;
+  }
 })
 
 addEventListener('resize', () => {
   canvas.width = innerWidth
   canvas.height = innerHeight
-
   init()
+});
+
+let extra = {
+  x: null,
+  y: null,
+  xd: null,
+  xy: null
+}
+addEventListener('mousedown', (event) => {
+  moving = true;
+  extra.x = event.clientX;
+  extra.y = event.clientY;
+  line.push(new Line(extra.x, extra.y, mouse.x, mouse.y));
+  ballArray.push(new Ball(extra.x, extra.y, 0, 0, 30, 'green', true));
+
 })
 
-addEventListener('click', (event) => {
-  console.log('clicked');
-  init()
+addEventListener('mouseup', (event) => {
+  moving = false;
+  line.pop();
+  ballArray.pop();
+  ballArray.push(new Ball(extra.x, extra.y, -(event.clientX - extra.x) / 10, -(event.clientY - extra.y) / 10, 30, 'red', false));
 })
+
 
 
 
@@ -61,7 +101,7 @@ function init() {
       }
     } 
 
-    ballArray.push(new Ball(x, y, dx, dy, radius, 'blue', c, canvas));
+    ballArray.push(new Ball(x, y, dx, dy, radius, 'blue', false));
 	}
 }
 
@@ -75,10 +115,14 @@ export function distance(x1, y1, x2, y2) {
 function animate() {
   requestAnimationFrame(animate)
   c.clearRect(0, 0, canvas.width, canvas.height)
-
   ballArray.forEach(ball => {
    ball.update(ballArray)
-  })
+  });
+  if (line) {
+    line.forEach(li => {
+      li.update();
+    })
+  }
 }
 
 

@@ -105,9 +105,9 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
 
 
 var gravity = 0.2;
-var friction = 0.9;
+var friction = 0.7;
 var Ball = /*#__PURE__*/function () {
-  function Ball(x, y, dx, dy, radius, color, c, canvas) {
+  function Ball(x, y, dx, dy, radius, color, placeHolder) {
     _classCallCheck(this, Ball);
 
     this.x = x;
@@ -118,66 +118,65 @@ var Ball = /*#__PURE__*/function () {
     };
     this.radius = radius;
     this.color = color;
-    this.c = c;
-    this.canvas = canvas;
     this.mass = 1;
+    this.placeHolder = placeHolder;
   }
 
   _createClass(Ball, [{
     key: "update",
     value: function update(balls) {
-      var coll = false;
+      if (!this.placeHolder) {
+        var coll = false;
 
-      for (var i = 0; i < balls.length; i++) {
-        if (this === balls[i]) continue;
-        var prev = balls[i];
+        for (var i = 0; i < balls.length; i++) {
+          if (this === balls[i]) continue;
+          var prev = balls[i];
 
-        if (Object(_canvas__WEBPACK_IMPORTED_MODULE_0__["distance"])(this.x + this.velocity.x, this.y + this.velocity.y, prev.x, prev.y) - this.radius * 2 < 0) {
-          resolveCollision(this, balls[i]);
-          coll = true;
+          if (Object(_canvas__WEBPACK_IMPORTED_MODULE_0__["distance"])(this.x + this.velocity.x, this.y + this.velocity.y, prev.x, prev.y) - this.radius * 2 < 0) {
+            resolveCollision(this, balls[i]);
+            coll = true;
+          }
         }
-      }
 
-      if (this.x - this.radius <= 0 || this.x + this.radius >= innerWidth) {
-        this.velocity.x = -this.velocity.x;
-      }
+        if (this.x - this.radius <= 0 || this.x + this.radius >= innerWidth) {
+          this.velocity.x = -this.velocity.x;
+        }
 
-      if (this.y - this.radius + this.velocity.y <= 0 || this.y + this.radius + this.velocity.y >= innerHeight) {
-        this.velocity.y = -this.velocity.y;
-        this.velocity.y = this.velocity.y * friction;
-        this.velocity.x = this.velocity.x * friction;
-      } else {
-        if (!coll) {
-          this.velocity.y += gravity;
-        } else {}
-      }
+        if (this.y - this.radius + this.velocity.y <= 0 || this.y + this.radius + this.velocity.y >= innerHeight) {
+          this.velocity.y = -this.velocity.y;
+          this.velocity.y = this.velocity.y * friction;
+          this.velocity.x = this.velocity.x * friction;
+        } else {
+          if (!coll) {
+            this.velocity.y += gravity;
+          } else {}
+        }
 
-      this.x += this.velocity.x;
-      this.y += this.velocity.y; // if (this.y + this.radius + this.velocity.y > this.canvas.height) {
-      // 	this.velocity.y = -this.velocity.y;
-      // 	this.velocity.y = this.velocity.y * friction;
-      // 	this.velocity.x = this.velocity.x * friction;
-      // } else {
-      // 	this.velocity.y += gravity;
-      // }
-      // if (this.x + this.radius >= this.canvas.width || this.x - this.radius <= 0) {
-      // 	this.velocity.x = -this.velocity.x * friction;
-      // }
-      // this.x += this.velocity.x;
-      // this.y += this.velocity.y;
+        this.x += this.velocity.x;
+        this.y += this.velocity.y; // if (this.y + this.radius + this.velocity.y > this.canvas.height) {
+        // 	this.velocity.y = -this.velocity.y;
+        // 	this.velocity.y = this.velocity.y * friction;
+        // 	this.velocity.x = this.velocity.x * friction;
+        // } else {
+        // 	this.velocity.y += gravity;
+        // }
+        // if (this.x + this.radius >= this.canvas.width || this.x - this.radius <= 0) {
+        // 	this.velocity.x = -this.velocity.x * friction;
+        // }
+        // this.x += this.velocity.x;
+        // this.y += this.velocity.y;
+      }
 
       this.draw();
     }
   }, {
     key: "draw",
     value: function draw() {
-      this.c.beginPath();
-      this.c.arc(this.x, this.y, this.radius, 0, Math.PI * 2, false);
-      this.c.fillStyle = this.color;
-      this.c.strokeStyle = this.color; // this.c.fill();
-
-      this.c.stroke();
-      this.c.closePath();
+      _canvas__WEBPACK_IMPORTED_MODULE_0__["c"].beginPath();
+      _canvas__WEBPACK_IMPORTED_MODULE_0__["c"].arc(this.x, this.y, this.radius, 0, Math.PI * 2, false);
+      _canvas__WEBPACK_IMPORTED_MODULE_0__["c"].strokeStyle = this.color;
+      _canvas__WEBPACK_IMPORTED_MODULE_0__["c"].stroke();
+      _canvas__WEBPACK_IMPORTED_MODULE_0__["c"].closePath();
     }
   }]);
 
@@ -233,39 +232,96 @@ function rotate(velocity, angle) {
 /*!**************************!*\
   !*** ./src/js/canvas.js ***!
   \**************************/
-/*! exports provided: distance */
+/*! exports provided: canvas, c, distance */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "canvas", function() { return canvas; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "c", function() { return c; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "distance", function() { return distance; });
 /* harmony import */ var _utils__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./utils */ "./src/js/utils.js");
 /* harmony import */ var _utils__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(_utils__WEBPACK_IMPORTED_MODULE_0__);
 /* harmony import */ var _Ball__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./Ball */ "./src/js/Ball.js");
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
+
+function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
+
 
 
 var canvas = document.querySelector('canvas');
 var c = canvas.getContext('2d');
 canvas.width = innerWidth;
 canvas.height = innerHeight;
+var moving = false;
+var line = [];
 var mouse = {
   x: innerWidth / 2,
   y: innerHeight / 2
 };
+
+var Line = /*#__PURE__*/function () {
+  function Line(x, y, toX, toY) {
+    _classCallCheck(this, Line);
+
+    this.x = x;
+    this.y = y;
+    this.toX = toX;
+    this.toY = toY;
+  }
+
+  _createClass(Line, [{
+    key: "update",
+    value: function update() {
+      this.draw();
+    }
+  }, {
+    key: "draw",
+    value: function draw() {
+      c.beginPath();
+      c.moveTo(this.x, this.y);
+      c.lineTo(mouse.x, mouse.y);
+      c.stroke();
+      c.strokeStyle = 'black';
+    }
+  }]);
+
+  return Line;
+}();
+
 var colors = ['#2185C5', '#7ECEFD', '#FFF6E5', '#FF7F66']; // Event Listeners
 
 addEventListener('mousemove', function (event) {
-  mouse.x = event.clientX;
-  mouse.y = event.clientY;
+  if (moving) {
+    mouse.x = event.clientX;
+    mouse.y = event.clientY;
+  }
 });
 addEventListener('resize', function () {
   canvas.width = innerWidth;
   canvas.height = innerHeight;
   init();
 });
-addEventListener('click', function (event) {
-  console.log('clicked');
-  init();
+var extra = {
+  x: null,
+  y: null,
+  xd: null,
+  xy: null
+};
+addEventListener('mousedown', function (event) {
+  moving = true;
+  extra.x = event.clientX;
+  extra.y = event.clientY;
+  line.push(new Line(extra.x, extra.y, mouse.x, mouse.y));
+  ballArray.push(new _Ball__WEBPACK_IMPORTED_MODULE_1__["Ball"](extra.x, extra.y, 0, 0, 30, 'green', true));
+});
+addEventListener('mouseup', function (event) {
+  moving = false;
+  line.pop();
+  ballArray.pop();
+  ballArray.push(new _Ball__WEBPACK_IMPORTED_MODULE_1__["Ball"](extra.x, extra.y, -(event.clientX - extra.x) / 10, -(event.clientY - extra.y) / 10, 30, 'red', false));
 }); // Implementation
 
 var ballArray = [];
@@ -292,7 +348,7 @@ function init() {
       }
     }
 
-    ballArray.push(new _Ball__WEBPACK_IMPORTED_MODULE_1__["Ball"](x, y, dx, dy, radius, 'blue', c, canvas));
+    ballArray.push(new _Ball__WEBPACK_IMPORTED_MODULE_1__["Ball"](x, y, dx, dy, radius, 'blue', false));
   }
 }
 
@@ -308,6 +364,12 @@ function animate() {
   ballArray.forEach(function (ball) {
     ball.update(ballArray);
   });
+
+  if (line) {
+    line.forEach(function (li) {
+      li.update();
+    });
+  }
 }
 
 init();
