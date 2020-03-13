@@ -1,10 +1,13 @@
-import utils from './utils'
+import utils from './utils';
+import {Ball} from './Ball';
 
-const canvas = document.querySelector('canvas')
-const c = canvas.getContext('2d')
+const canvas = document.querySelector('canvas');
+const c = canvas.getContext('2d');
 
 canvas.width = innerWidth
 canvas.height = innerHeight
+
+
 
 const mouse = {
   x: innerWidth / 2,
@@ -26,36 +29,41 @@ addEventListener('resize', () => {
   init()
 })
 
-// Objects
-class Object {
-  constructor(x, y, radius, color) {
-    this.x = x
-    this.y = y
-    this.radius = radius
-    this.color = color
-  }
 
-  draw() {
-    c.beginPath()
-    c.arc(this.x, this.y, this.radius, 0, Math.PI * 2, false)
-    c.fillStyle = this.color
-    c.fill()
-    c.closePath()
-  }
-
-  update() {
-    this.draw()
-  }
-}
 
 // Implementation
-let objects
-function init() {
-  objects = []
+var ballArray = [];
 
-  for (let i = 0; i < 400; i++) {
-    // objects.push()
-  }
+function init() {
+	ballArray = [];
+
+	for (let i = 0; i < 3; i++) {
+		var radius = 200;
+		var x = utils.randomIntFromRange(radius, canvas.width - radius)
+		var y = utils.randomIntFromRange(radius, canvas.height - radius)
+		var dx = utils.randomIntFromRange(-3, 3)
+		var dy = utils.randomIntFromRange(-2, 2)
+    
+    if ( i !== 0) {
+      for (let j = 0; j < ballArray.length; j++) {
+          const prev = ballArray[j];
+          if((distance(x, y, prev.x, prev.y) - (radius * 2))  < 0) {
+            var x = utils.randomIntFromRange(radius, canvas.width - radius);
+            var y = utils.randomIntFromRange(radius, canvas.height - radius);
+            
+            j = -1;
+          }
+      }
+    } 
+
+    ballArray.push(new Ball(x, y, dx, dy, radius, 'blue', c, canvas));
+	}
+}
+
+export function distance(x1, y1, x2, y2) {
+  const xDist = x2 - x1;
+  const yDist = y2 - y1;
+  return Math.sqrt(Math.pow(xDist, 2) + Math.pow(yDist, 2));
 }
 
 // Animation Loop
@@ -63,11 +71,11 @@ function animate() {
   requestAnimationFrame(animate)
   c.clearRect(0, 0, canvas.width, canvas.height)
 
-  c.fillText('HTML CANVAS BOILERPLATE', mouse.x, mouse.y)
-  // objects.forEach(object => {
-  //  object.update()
-  // })
+  ballArray.forEach(ball => {
+   ball.update(ballArray)
+  })
 }
+
 
 init()
 animate()
