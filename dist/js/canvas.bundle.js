@@ -105,7 +105,7 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
 
 
 var gravity = 0.2;
-var friction = 0.5;
+var friction = 0.9;
 var Ball = /*#__PURE__*/function () {
   function Ball(x, y, dx, dy, radius, color, c, canvas) {
     _classCallCheck(this, Ball);
@@ -126,37 +126,46 @@ var Ball = /*#__PURE__*/function () {
   _createClass(Ball, [{
     key: "update",
     value: function update(balls) {
+      var coll = false;
+
       for (var i = 0; i < balls.length; i++) {
         if (this === balls[i]) continue;
         var prev = balls[i];
 
-        if (Object(_canvas__WEBPACK_IMPORTED_MODULE_0__["distance"])(this.x, this.y, prev.x, prev.y) - this.radius * 2 < 0) {
+        if (Object(_canvas__WEBPACK_IMPORTED_MODULE_0__["distance"])(this.x + this.velocity.x, this.y + this.velocity.y, prev.x, prev.y) - this.radius * 2 < 0) {
           resolveCollision(this, balls[i]);
+          coll = true;
         }
-      } // if (this.x - this.radius <= 0 || this.x + this.radius >= innerWidth) {
-      // 	this.velocity.x = - this.velocity.x;
-      // }
-      // if (this.y - this.radius <= 0 || this.y + this.radius >= innerHeight) {
-      // 	this.velocity.y = - this.velocity.y;
-      // }
-      // this.x += this.velocity.x;
-      // this.y += this.velocity.y;
+      }
 
+      if (this.x - this.radius <= 0 || this.x + this.radius >= innerWidth) {
+        this.velocity.x = -this.velocity.x;
+      }
 
-      if (this.y + this.radius + this.velocity.y > this.canvas.height) {
+      if (this.y - this.radius + this.velocity.y <= 0 || this.y + this.radius + this.velocity.y >= innerHeight) {
         this.velocity.y = -this.velocity.y;
         this.velocity.y = this.velocity.y * friction;
         this.velocity.x = this.velocity.x * friction;
       } else {
-        this.velocity.y += gravity;
-      }
-
-      if (this.x + this.radius >= this.canvas.width || this.x - this.radius <= 0) {
-        this.velocity.x = -this.velocity.x * friction;
+        if (!coll) {
+          this.velocity.y += gravity;
+        } else {}
       }
 
       this.x += this.velocity.x;
-      this.y += this.velocity.y;
+      this.y += this.velocity.y; // if (this.y + this.radius + this.velocity.y > this.canvas.height) {
+      // 	this.velocity.y = -this.velocity.y;
+      // 	this.velocity.y = this.velocity.y * friction;
+      // 	this.velocity.x = this.velocity.x * friction;
+      // } else {
+      // 	this.velocity.y += gravity;
+      // }
+      // if (this.x + this.radius >= this.canvas.width || this.x - this.radius <= 0) {
+      // 	this.velocity.x = -this.velocity.x * friction;
+      // }
+      // this.x += this.velocity.x;
+      // this.y += this.velocity.y;
+
       this.draw();
     }
   }, {
@@ -175,21 +184,21 @@ var Ball = /*#__PURE__*/function () {
   return Ball;
 }();
 
-function resolveCollision(particle, otherParticle) {
-  var xVelocityDiff = particle.velocity.x - otherParticle.velocity.x;
-  var yVelocityDiff = particle.velocity.y - otherParticle.velocity.y;
-  var xDist = otherParticle.x - particle.x;
-  var yDist = otherParticle.y - particle.y; // Prevent accidental overlap of particles
+function resolveCollision(ball, otherBall) {
+  var xVelocityDiff = ball.velocity.x - otherBall.velocity.x;
+  var yVelocityDiff = ball.velocity.y - otherBall.velocity.y;
+  var xDist = otherBall.x - ball.x;
+  var yDist = otherBall.y - ball.y; // Prevent accidental overlap of particles
 
   if (xVelocityDiff * xDist + yVelocityDiff * yDist >= 0) {
     // Grab angle between the two colliding particles
-    var angle = -Math.atan2(otherParticle.y - particle.y, otherParticle.x - particle.x); // Store mass in var for better readability in collision equation
+    var angle = -Math.atan2(otherBall.y - ball.y, otherBall.x - ball.x); // Store mass in var for better readability in collision equation
 
-    var m1 = particle.mass;
-    var m2 = otherParticle.mass; // Velocity before equation
+    var m1 = ball.mass;
+    var m2 = otherBall.mass; // Velocity before equation
 
-    var u1 = rotate(particle.velocity, angle);
-    var u2 = rotate(otherParticle.velocity, angle); // Velocity after 1d collision equation
+    var u1 = rotate(ball.velocity, angle);
+    var u2 = rotate(otherBall.velocity, angle); // Velocity after 1d collision equation
 
     var v1 = {
       x: u1.x * (m1 - m2) / (m1 + m2) + u2.x * 2 * m2 / (m1 + m2),
@@ -203,10 +212,10 @@ function resolveCollision(particle, otherParticle) {
     var vFinal1 = rotate(v1, -angle);
     var vFinal2 = rotate(v2, -angle); // Swap particle velocities for realistic bounce effect
 
-    particle.velocity.x = vFinal1.x;
-    particle.velocity.y = vFinal1.y;
-    otherParticle.velocity.x = vFinal2.x;
-    otherParticle.velocity.y = vFinal2.y;
+    ball.velocity.x = vFinal1.x;
+    ball.velocity.y = vFinal1.y;
+    otherBall.velocity.x = vFinal2.x;
+    otherBall.velocity.y = vFinal2.y;
   }
 }
 
@@ -253,6 +262,10 @@ addEventListener('resize', function () {
   canvas.width = innerWidth;
   canvas.height = innerHeight;
   init();
+});
+addEventListener('click', function (event) {
+  console.log('clicked');
+  init();
 }); // Implementation
 
 var ballArray = [];
@@ -260,8 +273,8 @@ var ballArray = [];
 function init() {
   ballArray = [];
 
-  for (var i = 0; i < 3; i++) {
-    var radius = 200;
+  for (var i = 0; i < 40; i++) {
+    var radius = 30;
     var x = _utils__WEBPACK_IMPORTED_MODULE_0___default.a.randomIntFromRange(radius, canvas.width - radius);
     var y = _utils__WEBPACK_IMPORTED_MODULE_0___default.a.randomIntFromRange(radius, canvas.height - radius);
     var dx = _utils__WEBPACK_IMPORTED_MODULE_0___default.a.randomIntFromRange(-3, 3);

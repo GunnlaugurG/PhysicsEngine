@@ -29,6 +29,11 @@ addEventListener('resize', () => {
   init()
 })
 
+addEventListener('click', (event) => {
+  console.log('clicked');
+  init()
+})
+
 
 
 // Implementation
@@ -37,8 +42,8 @@ var ballArray = [];
 function init() {
 	ballArray = [];
 
-	for (let i = 0; i < 3; i++) {
-		var radius = 200;
+	for (let i = 0; i < 40; i++) {
+		var radius = 30;
 		var x = utils.randomIntFromRange(radius, canvas.width - radius)
 		var y = utils.randomIntFromRange(radius, canvas.height - radius)
 		var dx = utils.randomIntFromRange(-3, 3)
