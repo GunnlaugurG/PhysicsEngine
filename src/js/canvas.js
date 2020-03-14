@@ -14,6 +14,7 @@ const mouse = {
   y: innerHeight / 2
 }
 
+/** PlaceHolder line for shooting directions */
 class Line {
   constructor(x, y, toX, toY) {
     this.x = x;

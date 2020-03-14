@@ -22,7 +22,7 @@ export class Ball {
 		if (!this.placeHolder) {
 			let coll = false;
 			for (let i = 0; i < balls.length; i++) {
-				if (this === balls[i] ) continue;
+				if (this === balls[i] || balls[i].placeHolder) continue;
 				const prev = balls[i];
 				if (distance(this.x + this.velocity.x, this.y + this.velocity.y, prev.x, prev.y) - this.radius * 2  < 0) {
 					resolveCollision(this, balls[i]);

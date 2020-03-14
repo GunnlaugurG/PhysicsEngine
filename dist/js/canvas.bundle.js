@@ -129,7 +129,7 @@ var Ball = /*#__PURE__*/function () {
         var coll = false;
 
         for (var i = 0; i < balls.length; i++) {
-          if (this === balls[i]) continue;
+          if (this === balls[i] || balls[i].placeHolder) continue;
           var prev = balls[i];
 
           if (Object(_canvas__WEBPACK_IMPORTED_MODULE_0__["distance"])(this.x + this.velocity.x, this.y + this.velocity.y, prev.x, prev.y) - this.radius * 2 < 0) {
@@ -261,6 +261,7 @@ var mouse = {
   x: innerWidth / 2,
   y: innerHeight / 2
 };
+/** PlaceHolder line for shooting directions */
 
 var Line = /*#__PURE__*/function () {
   function Line(x, y, toX, toY) {
