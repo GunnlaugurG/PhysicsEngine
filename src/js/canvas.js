@@ -1,5 +1,9 @@
 import utils from './utils';
 import {Ball} from './Ball';
+import { Rectangle } from './Rectangle';
+import { Vec2 } from './Vec2';
+import { Player } from './Player';
+import { StickBox } from './StickBox';
 
 export const canvas = document.querySelector('canvas');
 export const c = canvas.getContext('2d');
@@ -7,6 +11,7 @@ export const c = canvas.getContext('2d');
 canvas.width = innerWidth
 canvas.height = innerHeight
 
+let charInput = false;
 let moving = false;
 let line = [];
 const mouse = {
@@ -41,10 +46,20 @@ const colors = ['#2185C5', '#7ECEFD', '#FFF6E5', '#FF7F66']
 // Event Listeners
 addEventListener('mousemove', (event) => {
   if (moving) {
-    mouse.x = event.clientX;
-    mouse.y = event.clientY;
+    placeH.center.y = event.clientY;
+    placeH.center.x = event.clientX; 
   }
-})
+});
+
+addEventListener('keydown', (event) => {
+  player.controll(event.key, true);
+});
+
+addEventListener('keyup', (event) => {
+  player.controll(event.key, false);
+});
+
+
 
 addEventListener('resize', () => {
   canvas.width = innerWidth
@@ -52,26 +67,25 @@ addEventListener('resize', () => {
   init()
 });
 
+let placeH = null;
 let extra = {
   x: null,
   y: null,
-  xd: null,
-  xy: null
+  width: null,
+  height: null,
 }
-addEventListener('mousedown', (event) => {
-  moving = true;
-  extra.x = event.clientX;
-  extra.y = event.clientY;
-  line.push(new Line(extra.x, extra.y, mouse.x, mouse.y));
-  ballArray.push(new Ball(extra.x, extra.y, 0, 0, 30, 'green', true));
 
+addEventListener('mousedown', (event) => {
+  mouse.x = event.clientX;
+  mouse.y = event.clientY;
+  placeH = new Rectangle(new Vec2(mouse.x, mouse.y), 100, 20, 0, 'green', 0);
+  moving = true;
 })
 
 addEventListener('mouseup', (event) => {
   moving = false;
-  line.pop();
-  ballArray.pop();
-  ballArray.push(new Ball(extra.x, extra.y, -(event.clientX - extra.x) / 10, -(event.clientY - extra.y) / 10, 30, 'red', false));
+  rectArray.push(placeH);
+  placeH = null;
 })
 
 
@@ -79,11 +93,16 @@ addEventListener('mouseup', (event) => {
 
 // Implementation
 var ballArray = [];
-
-function init() {
-	ballArray = [];
-
-	for (let i = 0; i < 40; i++) {
+var rectArray = [];
+let player = null;
+let stickyBox = null;
+export function init() {
+  ballArray = [];
+  stickyBox = new StickBox(100, 100, 100, 100);
+  player = new Player(new Vec2(canvas.width / 2, canvas.height / 2), 20, 20, new Vec2(0, 0), 'blue', 0);
+  rectArray.push(new Rectangle(new Vec2(canvas.width / 2, canvas.height - 50), 100, 20, new Vec2(0, 0), 'green', 0))
+  rectArray.push(new Rectangle(new Vec2(canvas.width / 2 + 100, canvas.height - 150), 100, 20, new Vec2(0, 0), 'green', 0))
+	for (let i = 0; i < 7; i++) {
 		var radius = 30;
 		var x = utils.randomIntFromRange(radius, canvas.width - radius)
 		var y = utils.randomIntFromRange(radius, canvas.height - radius)
@@ -116,13 +135,25 @@ export function distance(x1, y1, x2, y2) {
 function animate() {
   requestAnimationFrame(animate)
   c.clearRect(0, 0, canvas.width, canvas.height)
+  
   ballArray.forEach(ball => {
-   ball.update(ballArray)
+   ball.update(ballArray, rectArray);
   });
+
   if (line) {
     line.forEach(li => {
       li.update();
     })
+  }
+  rectArray.forEach((rect) => {
+    rect.update();
+  })
+  
+  player.update(rectArray, ballArray);
+  stickyBox.update();
+
+  if (placeH) {
+    placeH.update();
   }
 }
 
