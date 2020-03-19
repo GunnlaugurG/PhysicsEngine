@@ -37,7 +37,6 @@ export class StickBox {
 		this.creatStick(3, 0);
 		this.creatStick(0, 2);
 		this.creatStick(1, 3);
-		console.log(this.sticks.length, this.points);
 	}
 
 	creatStick(p1, p2) {
@@ -49,7 +48,6 @@ export class StickBox {
 	}
 
 	cratePoint(xCor, yCor) {
-		console.log(xCor,yCor);
 		this.points.push({
 			x: xCor,
 			y: yCor,
@@ -122,12 +120,14 @@ export class StickBox {
 	}
 
 	renderPoints() {
-		for(var i = 0; i < this.points.length; i++) {
-			var p = this.points[i];
-			c.beginPath();
-			c.arc(p.x, p.y, 5, 0, Math.PI * 2);
-			c.fill();
-		}
+		// for(var i = 0; i < this.points.length; i++) {
+		// 	var p = this.points[i];
+		// 	c.beginPath();
+		// 	c.arc(p.x, p.y, 5, 0, Math.PI * 2);
+		// 	c.fill();
+		// 	c.fillStyle = 'red'
+		// 	c.closePath()
+		// }
 	}
 
 	renderSticks() {
@@ -136,7 +136,9 @@ export class StickBox {
 			var s = this.sticks[i];
 			c.moveTo(s.p0.x, s.p0.y);
 			c.lineTo(s.p1.x, s.p1.y);
+			c.strokeStyle = 'red'
 		}
 		c.stroke();
+		c.closePath();
 	}
 }

@@ -58,6 +58,7 @@ export class Player {
 		if (ballArray) {
 			for (let circle of ballArray) {
 				if (rectCircleCollision(this, circle)) {
+					init();
 					console.log('collision');
 				}
 			}
@@ -83,8 +84,9 @@ export class Player {
 		c.beginPath();
 		c.rect(this.center.x, this.center.y, this.width, this.height);
 		c.fill();
-		c.strokeStyle = "blue";
-		c.lineWidth = 4;
+		c.fillStyle = 'red'
+		c.strokeStyle = "red";
 		c.stroke();
+		c.closePath();
 	}
 }

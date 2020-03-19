@@ -78,7 +78,7 @@ let extra = {
 addEventListener('mousedown', (event) => {
   mouse.x = event.clientX;
   mouse.y = event.clientY;
-  placeH = new Rectangle(new Vec2(mouse.x, mouse.y), 100, 20, 0, 'green', 0);
+  placeH = new Rectangle(new Vec2(mouse.x, mouse.y), 100, 20, new Vec2(0,0), 'purple', 0, false);
   moving = true;
 })
 
@@ -96,12 +96,19 @@ var ballArray = [];
 var rectArray = [];
 let player = null;
 let stickyBox = null;
+
 export function init() {
   ballArray = [];
   stickyBox = new StickBox(100, 100, 100, 100);
   player = new Player(new Vec2(canvas.width / 2, canvas.height / 2), 20, 20, new Vec2(0, 0), 'blue', 0);
-  rectArray.push(new Rectangle(new Vec2(canvas.width / 2, canvas.height - 50), 100, 20, new Vec2(0, 0), 'green', 0))
-  rectArray.push(new Rectangle(new Vec2(canvas.width / 2 + 100, canvas.height - 150), 100, 20, new Vec2(0, 0), 'green', 0))
+  [0,1,2,3,4,5,6,6,7,8,3].map(() => {
+    rectArray.push(new Rectangle(new Vec2(utils.randomIntFromRange(0, canvas.width), utils.randomIntFromRange(0, canvas.height)), 100, 20, new Vec2(utils.randomIntFromRange(-40, 40), utils.randomIntFromRange(-40, 40)), 'green', utils.randomIntFromRange(0, 4)));
+  })
+  rectArray.push(new Rectangle(new Vec2(canvas.width / 2, canvas.height / 2), 200, 30, new Vec2(0, 0), 'green', 0));
+
+  // rectArray.push(new Rectangle(new Vec2(canvas.width / 2 - 100, canvas.height / 2), 100, 20, new Vec2(20, 0), 'green', utils.randomIntFromRange(0, 4)));
+  // rectArray.push(new Rectangle(new Vec2(canvas.width / 2 + 100, canvas.height / 2), 100, 20, new Vec2(-20, 0), 'green', utils.randomIntFromRange(0, 4)));
+
 	for (let i = 0; i < 7; i++) {
 		var radius = 30;
 		var x = utils.randomIntFromRange(radius, canvas.width - radius)
@@ -136,9 +143,9 @@ function animate() {
   requestAnimationFrame(animate)
   c.clearRect(0, 0, canvas.width, canvas.height)
   
-  ballArray.forEach(ball => {
-   ball.update(ballArray, rectArray);
-  });
+  // ballArray.forEach(ball => {
+  //  ball.update(ballArray, rectArray);
+  // });
 
   if (line) {
     line.forEach(li => {
@@ -146,15 +153,15 @@ function animate() {
     })
   }
   rectArray.forEach((rect) => {
-    rect.update();
+    rect.update(rectArray, ballArray);
   })
   
-  player.update(rectArray, ballArray);
-  stickyBox.update();
+  // player.update(rectArray, ballArray);
+  // stickyBox.update();
 
-  if (placeH) {
-    placeH.update();
-  }
+  // if (placeH) {
+  //   placeH.update();
+  // }
 }
 
 
