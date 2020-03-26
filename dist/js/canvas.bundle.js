@@ -277,7 +277,7 @@ var CollisionInfo = /*#__PURE__*/function () {
 /*!**************************!*\
   !*** ./src/js/Engine.js ***!
   \**************************/
-/*! exports provided: playerRectCollision, rectCircleCollision, circleRectCollisionResponse, ballToBallCollision */
+/*! exports provided: playerRectCollision, rectCircleCollision, circleRectCollisionResponse, ballToBallCollision, resolveCollision */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -286,6 +286,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "rectCircleCollision", function() { return rectCircleCollision; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "circleRectCollisionResponse", function() { return circleRectCollisionResponse; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "ballToBallCollision", function() { return ballToBallCollision; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "resolveCollision", function() { return resolveCollision; });
 /* harmony import */ var _Vec2__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./Vec2 */ "./src/js/Vec2.js");
 
 var playerRectCollision = function playerRectCollision(player, rect) {
@@ -360,6 +361,79 @@ var rotate = function rotate(velocity, angle) {
     y: velocity.x * Math.sin(angle) + velocity.y * Math.cos(angle)
   };
   return rotatedVelocities;
+};
+
+var positionalCorrection = function positionalCorrection(s1, s2, collisionInfo) {
+  var s1InvMass = s1.mInvMass;
+  var s2InvMass = s2.mInvMass;
+  var num = collisionInfo.getDepth() / (s1InvMass + s2InvMass) * 0.8;
+  var correctionAmount = collisionInfo.getNormal().scale(num);
+  s1.move(correctionAmount.scale(-s1InvMass));
+  s2.move(correctionAmount.scale(s2InvMass));
+};
+
+var resolveCollision = function resolveCollision(s1, s2, collisionInfo) {
+  if (s1.mInvMass === 0 && s2.mInvMass === 0) {
+    return;
+  }
+
+  positionalCorrection(s1, s2, collisionInfo);
+  var n = collisionInfo.getNormal(); //the direction of collisionInfo is always from s1 to s2
+  //but the Mass is inversed, so start scale with s2 and end scale with s1
+
+  var start = collisionInfo.mStart.scale(s2.mInvMass / (s1.mInvMass + s2.mInvMass));
+  var end = collisionInfo.mEnd.scale(s1.mInvMass / (s1.mInvMass + s2.mInvMass));
+  var p = start.add(end); //r is vector from center of object to collision point
+
+  var r1 = p.subtract(s1.center);
+  var r2 = p.subtract(s2.center); //newV = V + mAngularVelocity cross R
+
+  var v1 = s1.velocity.add(new _Vec2__WEBPACK_IMPORTED_MODULE_0__["Vec2"](-1 * s1.angularVelocity * r1.y, s1.angularVelocity * r1.x));
+  var v2 = s2.velocity.add(new _Vec2__WEBPACK_IMPORTED_MODULE_0__["Vec2"](-1 * s2.angularVelocity * r2.y, s2.angularVelocity * r2.x));
+  var relativeVelocity = v2.subtract(v1); // Relative velocity in normal direction
+
+  var rVelocityInNormal = relativeVelocity.dot(n); //if objects moving apart ignore
+
+  if (rVelocityInNormal > 0) {
+    return;
+  } // compute and apply response impulses for each object    
+
+
+  var newRestituion = Math.min(s1.mRestitution, s2.mRestitution);
+  var newFriction = Math.min(s1.mFriction, s2.mFriction); //R cross N
+
+  var R1crossN = r1.cross(n);
+  var R2crossN = r2.cross(n); // Calc impulse scalar
+  // the formula of jN can be found in http://www.myphysicslab.com/collision.html
+
+  var jN = -(1 + newRestituion) * rVelocityInNormal;
+  jN = jN / (s1.mInvMass + s2.mInvMass + R1crossN * R1crossN * s1.mInertia + R2crossN * R2crossN * s2.mInertia); //impulse is in direction of normal ( from s1 to s2)
+
+  var impulse = n.scale(jN); // impulse = F dt = m * ?v
+  // ?v = impulse / m
+
+  s1.velocity = s1.velocity.subtract(impulse.scale(1));
+  s2.velocity = s2.velocity.add(impulse.scale(1));
+  s1.angularVelocity -= R1crossN * jN * s1.mInertia;
+  s2.angularVelocity += R2crossN * jN * s2.mInertia;
+  var tangent = relativeVelocity.subtract(n.scale(relativeVelocity.dot(n))); //relativeVelocity.dot(tangent) should less than 0
+
+  tangent = tangent.normalize().scale(-1);
+  var R1crossT = r1.cross(tangent);
+  var R2crossT = r2.cross(tangent);
+  var jT = -(1 + newRestituion) * relativeVelocity.dot(tangent) * newFriction;
+  jT = jT / (s1.mInvMass + s2.mInvMass + R1crossT * R1crossT * s1.mInertia + R2crossT * R2crossT * s2.mInertia); //friction should less than force in normal direction
+
+  if (jT > jN) {
+    jT = jN;
+  } //impulse is from s1 to s2 (in opposite direction of velocity)
+
+
+  impulse = tangent.scale(jT);
+  s1.velocity = s1.velocity.subtract(impulse.scale(s1.mInvMass));
+  s2.velocity = s2.velocity.add(impulse.scale(s2.mInvMass));
+  s1.angularVelocity -= R1crossT * jT * s1.mInertia;
+  s2.angularVelocity += R2crossT * jT * s2.mInertia;
 };
 
 /***/ }),
@@ -536,6 +610,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _Vec2__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./Vec2 */ "./src/js/Vec2.js");
 /* harmony import */ var _canvas__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./canvas */ "./src/js/canvas.js");
 /* harmony import */ var _CollisionInfo__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./CollisionInfo */ "./src/js/CollisionInfo.js");
+/* harmony import */ var _Engine__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./Engine */ "./src/js/Engine.js");
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
@@ -544,12 +619,12 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
 
 
 
- // import { CollisionInfo } from "./CollisionInfo";
+
 
 var gravity = 1.5;
 var friction = 0.4;
 var Rectangle = /*#__PURE__*/function () {
-  function Rectangle(center, width, height, velocity, color, angle) {
+  function Rectangle(center, width, height, velocity, color, angle, shouldMove) {
     _classCallCheck(this, Rectangle);
 
     this.center = center;
@@ -558,6 +633,7 @@ var Rectangle = /*#__PURE__*/function () {
     this.angle = 0;
     this.velocity = velocity;
     this.mass = 1;
+    this.shouldMove = shouldMove;
     this.mFriction = friction;
     this.mInvMass = 1;
     this.angularVelocity = 0;
@@ -605,20 +681,10 @@ var Rectangle = /*#__PURE__*/function () {
               collisionInfo.changeDir();
             }
 
-            resolveCollision(this, rectArray[i], collisionInfo);
+            Object(_Engine__WEBPACK_IMPORTED_MODULE_3__["resolveCollision"])(this, rectArray[i], collisionInfo);
           }
         }
-      } // if (this.center.x - (this.width / 2) <= 0 || this.center.x + (this.width / 2) >= innerWidth) {
-      // 	this.velocity.x = - this.velocity.x;
-      // }
-      // if (this.center.y + this.height / 2 <= 0 || (this.center.y + this.height / 2) + this.velocity.y >= innerHeight) {
-      // 	this.velocity.y = - this.velocity.y;
-      // 	this.velocity.y = this.velocity.y * friction;
-      // 	this.velocity.x = this.velocity.x * friction; 
-      // }
-      // this.move(new Vec2(-this.velocity.x, this.velocity.y + this.velocity.y));
-      // this.velocity.y += gravity;
-
+      }
 
       this.draw();
     }
@@ -758,104 +824,6 @@ var Rectangle = /*#__PURE__*/function () {
 
   return Rectangle;
 }();
-
-var positionalCorrection = function positionalCorrection(s1, s2, collisionInfo) {
-  var s1InvMass = s1.mInvMass;
-  var s2InvMass = s2.mInvMass;
-  var num = collisionInfo.getDepth() / (s1InvMass + s2InvMass) * 0.8;
-  var correctionAmount = collisionInfo.getNormal().scale(num);
-  s1.move(correctionAmount.scale(-s1InvMass));
-  s2.move(correctionAmount.scale(s2InvMass));
-};
-
-var resolveCollision = function resolveCollision(s1, s2, collisionInfo) {
-  if (s1.mInvMass === 0 && s2.mInvMass === 0) {
-    return;
-  }
-
-  positionalCorrection(s1, s2, collisionInfo);
-  var n = collisionInfo.getNormal(); //the direction of collisionInfo is always from s1 to s2
-  //but the Mass is inversed, so start scale with s2 and end scale with s1
-
-  var start = collisionInfo.mStart.scale(s2.mInvMass / (s1.mInvMass + s2.mInvMass));
-  var end = collisionInfo.mEnd.scale(s1.mInvMass / (s1.mInvMass + s2.mInvMass));
-  var p = start.add(end); //r is vector from center of object to collision point
-
-  var r1 = p.subtract(s1.center);
-  var r2 = p.subtract(s2.center); //newV = V + mAngularVelocity cross R
-
-  var v1 = s1.velocity.add(new _Vec2__WEBPACK_IMPORTED_MODULE_0__["Vec2"](-1 * s1.angularVelocity * r1.y, s1.angularVelocity * r1.x));
-  var v2 = s2.velocity.add(new _Vec2__WEBPACK_IMPORTED_MODULE_0__["Vec2"](-1 * s2.angularVelocity * r2.y, s2.angularVelocity * r2.x));
-  var relativeVelocity = v2.subtract(v1); // Relative velocity in normal direction
-
-  var rVelocityInNormal = relativeVelocity.dot(n); //if objects moving apart ignore
-
-  if (rVelocityInNormal > 0) {
-    return;
-  } // compute and apply response impulses for each object    
-
-
-  var newRestituion = Math.min(s1.mRestitution, s2.mRestitution);
-  var newFriction = Math.min(s1.mFriction, s2.mFriction); //R cross N
-
-  var R1crossN = r1.cross(n);
-  var R2crossN = r2.cross(n); // Calc impulse scalar
-  // the formula of jN can be found in http://www.myphysicslab.com/collision.html
-
-  var jN = -(1 + newRestituion) * rVelocityInNormal;
-  jN = jN / (s1.mInvMass + s2.mInvMass + R1crossN * R1crossN * s1.mInertia + R2crossN * R2crossN * s2.mInertia); //impulse is in direction of normal ( from s1 to s2)
-
-  var impulse = n.scale(jN); // impulse = F dt = m * ?v
-  // ?v = impulse / m
-
-  s1.velocity = s1.velocity.subtract(impulse.scale(1));
-  s2.velocity = s2.velocity.add(impulse.scale(1));
-  s1.angularVelocity -= R1crossN * jN * s1.mInertia;
-  s2.angularVelocity += R2crossN * jN * s2.mInertia;
-  var tangent = relativeVelocity.subtract(n.scale(relativeVelocity.dot(n))); //relativeVelocity.dot(tangent) should less than 0
-
-  tangent = tangent.normalize().scale(-1);
-  var R1crossT = r1.cross(tangent);
-  var R2crossT = r2.cross(tangent);
-  var jT = -(1 + newRestituion) * relativeVelocity.dot(tangent) * newFriction;
-  jT = jT / (s1.mInvMass + s2.mInvMass + R1crossT * R1crossT * s1.mInertia + R2crossT * R2crossT * s2.mInertia); //friction should less than force in normal direction
-
-  if (jT > jN) {
-    jT = jN;
-  } //impulse is from s1 to s2 (in opposite direction of velocity)
-
-
-  impulse = tangent.scale(jT);
-  s1.velocity = s1.velocity.subtract(impulse.scale(s1.mInvMass));
-  s2.velocity = s2.velocity.add(impulse.scale(s2.mInvMass));
-  s1.angularVelocity -= R1crossT * jT * s1.mInertia;
-  s2.angularVelocity += R2crossT * jT * s2.mInertia;
-};
-
-Rectangle.prototype.collidedRectRect = function (r1, r2, collisionInfo) {
-  var collisionInfoR1 = new _CollisionInfo__WEBPACK_IMPORTED_MODULE_2__["CollisionInfo"]();
-  var collisionInfoR2 = new _CollisionInfo__WEBPACK_IMPORTED_MODULE_2__["CollisionInfo"]();
-  var status1 = false;
-  var status2 = false; //find Axis of Separation for both rectangle
-
-  status1 = r1.findAxisLeastPenetration(r2, collisionInfoR1);
-
-  if (status1) {
-    status2 = r2.findAxisLeastPenetration(r1, collisionInfoR2);
-
-    if (status2) {
-      //if both of rectangles are overlapping, choose the shorter normal as the normal       
-      if (collisionInfoR1.getDepth() < collisionInfoR2.getDepth()) {
-        var depthVec = collisionInfoR1.getNormal().scale(collisionInfoR1.getDepth());
-        collisionInfo.setInfo(collisionInfoR1.getDepth(), collisionInfoR1.getNormal(), collisionInfoR1.mStart.subtract(depthVec));
-      } else {
-        collisionInfo.setInfo(collisionInfoR2.getDepth(), collisionInfoR2.getNormal().scale(-1), collisionInfoR2.mStart);
-      }
-    }
-  }
-
-  return status1 && status2;
-};
 
 var SupportStruct = function SupportStruct() {
   this.mSupportPoint = null;
@@ -1227,13 +1195,13 @@ var Line = /*#__PURE__*/function () {
 }();
 
 var colors = ['#2185C5', '#7ECEFD', '#FFF6E5', '#FF7F66']; // Event Listeners
+// addEventListener('mousemove', (event) => {
+//   if (moving) {
+//     placeH.center.y = event.clientY;
+//     placeH.center.x = event.clientX; 
+//   }
+// });
 
-addEventListener('mousemove', function (event) {
-  if (moving) {
-    placeH.center.y = event.clientY;
-    placeH.center.x = event.clientX;
-  }
-});
 addEventListener('keydown', function (event) {
   player.controll(event.key, true);
 });
@@ -1273,9 +1241,9 @@ function init() {
   stickyBox = new _StickBox__WEBPACK_IMPORTED_MODULE_5__["StickBox"](100, 100, 100, 100);
   player = new _Player__WEBPACK_IMPORTED_MODULE_4__["Player"](new _Vec2__WEBPACK_IMPORTED_MODULE_3__["Vec2"](canvas.width / 2, canvas.height / 2), 20, 20, new _Vec2__WEBPACK_IMPORTED_MODULE_3__["Vec2"](0, 0), 'blue', 0);
   [0, 1, 2, 3, 4, 5, 6, 6, 7, 8, 3].map(function () {
-    rectArray.push(new _Rectangle__WEBPACK_IMPORTED_MODULE_2__["Rectangle"](new _Vec2__WEBPACK_IMPORTED_MODULE_3__["Vec2"](_utils__WEBPACK_IMPORTED_MODULE_0___default.a.randomIntFromRange(0, canvas.width), _utils__WEBPACK_IMPORTED_MODULE_0___default.a.randomIntFromRange(0, canvas.height)), 100, 20, new _Vec2__WEBPACK_IMPORTED_MODULE_3__["Vec2"](_utils__WEBPACK_IMPORTED_MODULE_0___default.a.randomIntFromRange(-40, 40), _utils__WEBPACK_IMPORTED_MODULE_0___default.a.randomIntFromRange(-40, 40)), 'green', _utils__WEBPACK_IMPORTED_MODULE_0___default.a.randomIntFromRange(0, 4)));
+    rectArray.push(new _Rectangle__WEBPACK_IMPORTED_MODULE_2__["Rectangle"](new _Vec2__WEBPACK_IMPORTED_MODULE_3__["Vec2"](_utils__WEBPACK_IMPORTED_MODULE_0___default.a.randomIntFromRange(0, canvas.width), _utils__WEBPACK_IMPORTED_MODULE_0___default.a.randomIntFromRange(0, canvas.height)), 100, 20, new _Vec2__WEBPACK_IMPORTED_MODULE_3__["Vec2"](_utils__WEBPACK_IMPORTED_MODULE_0___default.a.randomIntFromRange(-40, 40), _utils__WEBPACK_IMPORTED_MODULE_0___default.a.randomIntFromRange(-40, 40)), 'green', _utils__WEBPACK_IMPORTED_MODULE_0___default.a.randomIntFromRange(0, 4), true));
   });
-  rectArray.push(new _Rectangle__WEBPACK_IMPORTED_MODULE_2__["Rectangle"](new _Vec2__WEBPACK_IMPORTED_MODULE_3__["Vec2"](canvas.width / 2, canvas.height / 2), 200, 30, new _Vec2__WEBPACK_IMPORTED_MODULE_3__["Vec2"](0, 0), 'green', 0)); // rectArray.push(new Rectangle(new Vec2(canvas.width / 2 - 100, canvas.height / 2), 100, 20, new Vec2(20, 0), 'green', utils.randomIntFromRange(0, 4)));
+  rectArray.push(new _Rectangle__WEBPACK_IMPORTED_MODULE_2__["Rectangle"](new _Vec2__WEBPACK_IMPORTED_MODULE_3__["Vec2"](canvas.width / 2, canvas.height / 2), 200, 30, new _Vec2__WEBPACK_IMPORTED_MODULE_3__["Vec2"](0, 0), 'green', 0, false)); // rectArray.push(new Rectangle(new Vec2(canvas.width / 2 - 100, canvas.height / 2), 100, 20, new Vec2(20, 0), 'green', utils.randomIntFromRange(0, 4)));
   // rectArray.push(new Rectangle(new Vec2(canvas.width / 2 + 100, canvas.height / 2), 100, 20, new Vec2(-20, 0), 'green', utils.randomIntFromRange(0, 4)));
 
   for (var i = 0; i < 7; i++) {
@@ -1308,9 +1276,10 @@ function distance(x1, y1, x2, y2) {
 
 function animate() {
   requestAnimationFrame(animate);
-  c.clearRect(0, 0, canvas.width, canvas.height); // ballArray.forEach(ball => {
-  //  ball.update(ballArray, rectArray);
-  // });
+  c.clearRect(0, 0, canvas.width, canvas.height);
+  ballArray.forEach(function (ball) {
+    ball.update(ballArray, rectArray);
+  });
 
   if (line) {
     line.forEach(function (li) {

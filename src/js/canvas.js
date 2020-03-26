@@ -44,12 +44,12 @@ class Line {
 const colors = ['#2185C5', '#7ECEFD', '#FFF6E5', '#FF7F66']
 
 // Event Listeners
-addEventListener('mousemove', (event) => {
-  if (moving) {
-    placeH.center.y = event.clientY;
-    placeH.center.x = event.clientX; 
-  }
-});
+// addEventListener('mousemove', (event) => {
+//   if (moving) {
+//     placeH.center.y = event.clientY;
+//     placeH.center.x = event.clientX; 
+//   }
+// });
 
 addEventListener('keydown', (event) => {
   player.controll(event.key, true);
@@ -102,9 +102,9 @@ export function init() {
   stickyBox = new StickBox(100, 100, 100, 100);
   player = new Player(new Vec2(canvas.width / 2, canvas.height / 2), 20, 20, new Vec2(0, 0), 'blue', 0);
   [0,1,2,3,4,5,6,6,7,8,3].map(() => {
-    rectArray.push(new Rectangle(new Vec2(utils.randomIntFromRange(0, canvas.width), utils.randomIntFromRange(0, canvas.height)), 100, 20, new Vec2(utils.randomIntFromRange(-40, 40), utils.randomIntFromRange(-40, 40)), 'green', utils.randomIntFromRange(0, 4)));
+    rectArray.push(new Rectangle(new Vec2(utils.randomIntFromRange(0, canvas.width), utils.randomIntFromRange(0, canvas.height)), 100, 20, new Vec2(utils.randomIntFromRange(-40, 40), utils.randomIntFromRange(-40, 40)), 'green', utils.randomIntFromRange(0, 4), true));
   })
-  rectArray.push(new Rectangle(new Vec2(canvas.width / 2, canvas.height / 2), 200, 30, new Vec2(0, 0), 'green', 0));
+  rectArray.push(new Rectangle(new Vec2(canvas.width / 2, canvas.height / 2), 200, 30, new Vec2(0, 0), 'green', 0, false));
 
   // rectArray.push(new Rectangle(new Vec2(canvas.width / 2 - 100, canvas.height / 2), 100, 20, new Vec2(20, 0), 'green', utils.randomIntFromRange(0, 4)));
   // rectArray.push(new Rectangle(new Vec2(canvas.width / 2 + 100, canvas.height / 2), 100, 20, new Vec2(-20, 0), 'green', utils.randomIntFromRange(0, 4)));
@@ -143,9 +143,9 @@ function animate() {
   requestAnimationFrame(animate)
   c.clearRect(0, 0, canvas.width, canvas.height)
   
-  // ballArray.forEach(ball => {
-  //  ball.update(ballArray, rectArray);
-  // });
+  ballArray.forEach(ball => {
+   ball.update(ballArray, rectArray);
+  });
 
   if (line) {
     line.forEach(li => {
